@@ -1,4 +1,4 @@
-package main
+package ledger
 
 import (
 	"errors"
@@ -31,7 +31,7 @@ func (b Budget) Validate() error {
 	if b.Period == "" {
 		return errors.New("У бюджета должен быть задан период.")
 	}
-	return nilg
+	return nil
 }
 
 func CheckValid(v Validatable) error {

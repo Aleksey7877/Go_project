@@ -1,9 +1,9 @@
-package main
+package ledger
 
 import "fmt"
 
 func handleAdd(tx Transaction) {
-	err := AddTransaction(tx)
+	tx, err := AddTransaction(tx)
 	if err != nil {
 		fmt.Println("Ошибка добавления транзакции:", err)
 		return
@@ -12,7 +12,7 @@ func handleAdd(tx Transaction) {
 }
 
 func handleBudget(b Budget) {
-	err := SetBudget(b)
+	_, err := SetBudget(b)
 	if err != nil {
 		fmt.Println("Ошибка создания бюджета:", err)
 		return

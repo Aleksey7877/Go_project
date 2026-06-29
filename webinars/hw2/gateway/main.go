@@ -2,23 +2,22 @@ package main
 
 import (
 	"fmt"
+	"gateway/internal/api"
+	"log"
 	"net/http"
 )
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	fmt.Fprintln(w, "pong")
-}
-
 func main() {
-	http.HandleFunc("/ping", helloHandler)
+	mux := http.NewServeMux()
+
+	api.RegisterRoutes(mux)
+
+	handler := api.LoggingMiddleware(mux)
+
 	fmt.Println("Server is running on http://localhost:8080")
-	err := http.ListenAndServe(":8080", nil)
+
+	err := http.ListenAndServe(":8080", handler)
 	if err != nil {
-		fmt.Println("Error starting server:", err)
+		log.Fatal("Error starting server:", err)
 	}
 }

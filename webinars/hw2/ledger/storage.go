@@ -1,17 +1,31 @@
-package main
+package ledger
 
-import "fmt"
+import (
+	"errors"
+	"sync"
+	"time"
+)
 
 var transactions []Transaction
 
 var budgets map[string]map[string]Budget
 
-func AddTransaction(tx Transaction) error {
+var ErrBudgetExceeded = errors.New("budget exceeded")
+var ErrBudgetNotCreated = errors.New("budget is not created")
+var ErrBudgetPeriodWrong = errors.New("budget period must be a year")
+
+var mu sync.RWMutex
+
+func AddTransaction(tx Transaction) (Transaction, error) {
 
 	err := CheckValid(tx)
 	if err != nil {
-		return err
+		return Transaction{}, err
 	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
 	sum := tx.Amount
 	year := tx.Date.Format("2006")
 
@@ -27,26 +41,55 @@ func AddTransaction(tx Transaction) error {
 
 	if exists {
 		if sum > budget.Limit {
-			return fmt.Errorf("Превышен лимит бюджета для категории: %s", tx.Category)
+			return Transaction{}, ErrBudgetExceeded
 		}
 
 		tx.ID = len(transactions) + 1
 		transactions = append(transactions, tx)
-		return nil
+		return tx, nil
 	}
-	return fmt.Errorf("бюджет для года %s в категории %s не предусмотрен", year, tx.Category)
+	return Transaction{}, ErrBudgetNotCreated
 }
 
 func ListTransactions() []Transaction {
-	return transactions
+	mu.RLock()
+	defer mu.RUnlock()
+
+	result := make([]Transaction, len(transactions))
+	copy(result, transactions)
+
+	return result
 }
 
-func SetBudget(budget Budget) error {
+func ListBudgets() []Budget {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	result := make([]Budget, 0)
+
+	for _, yearBudgets := range budgets {
+		for _, budget := range yearBudgets {
+			result = append(result, budget)
+		}
+	}
+
+	return result
+}
+
+func SetBudget(budget Budget) (Budget, error) {
 	err := CheckValid(budget)
 	if err != nil {
-		return err
+		return Budget{}, err
 	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
 	year := budget.Period
+	_, err = time.Parse("2006", year)
+	if err != nil {
+		return Budget{}, ErrBudgetPeriodWrong
+	}
 
 	if budgets == nil {
 		budgets = make(map[string]map[string]Budget)
@@ -54,13 +97,11 @@ func SetBudget(budget Budget) error {
 			budgets[year] = make(map[string]Budget)
 		}
 		budgets[year][budget.Category] = budget
-		fmt.Println("Бюджет успешно обновлен: ", budget.Category, budget.Period)
-		return nil
+		return budget, nil
 	}
 	if budgets[year] == nil {
 		budgets[year] = make(map[string]Budget)
 	}
 	budgets[year][budget.Category] = budget
-	fmt.Println("Бюджет успешно обновлен: ", budget.Category, budget.Period)
-	return nil
+	return budget, nil
 }

@@ -1,4 +1,4 @@
-package main
+package ledger
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ func LoadBudgets(r io.Reader) error {
 	}
 
 	for _, budget := range listBudgets {
-		err := SetBudget(budget)
+		_, err := SetBudget(budget)
 		if err != nil {
 			return fmt.Errorf("ошибка установки бюджета %s %s: %w", budget.Category, budget.Period, err)
 		}
