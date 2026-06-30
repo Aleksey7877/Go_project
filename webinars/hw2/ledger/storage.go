@@ -105,3 +105,12 @@ func SetBudget(budget Budget) (Budget, error) {
 	budgets[year][budget.Category] = budget
 	return budget, nil
 }
+
+
+func Reset() {
+	mu.Lock()
+	defer mu.Unlock()
+
+	transactions = nil
+	budgets = nil
+}

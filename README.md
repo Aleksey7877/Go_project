@@ -185,3 +185,26 @@ internal/api/router.go    - регистрация маршрутов
 * Превышение бюджета возвращается со статусом `409 Conflict`.
 * Внутренняя бизнес-логика находится в пакете `ledger`.
 * Middleware логирует HTTP-метод, путь и длительность обработки запроса.
+
+
+### Задание 6. Тесты.
+
+
+Для запуска тестов Ledger:
+
+
+cd webinars/hw2/ledger
+go test -v -cover -coverprofile=cover.out
+go tool cover -html=cover.out -o cover.html
+
+
+Для запуска тестов Gateway:
+
+cd webinars/hw2/gateway
+go test -v ./... -cover -coverprofile=cover.out
+go tool cover -html=cover.out -o cover.html
+
+Текущее покрытие:
+
+Ledger: ~61.4%
+Gateway internal/api: ~70.7%
