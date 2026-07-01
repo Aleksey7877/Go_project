@@ -5,9 +5,23 @@ import (
 	"ledger"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	err := ledger.InitDB()
+	if err != nil {
+		panic(err)
+	}
+
+	code := m.Run()
+
+	ledger.CloseDB()
+
+	os.Exit(code)
+}
 
 func setupTestHandler() http.Handler {
 	mux := http.NewServeMux()

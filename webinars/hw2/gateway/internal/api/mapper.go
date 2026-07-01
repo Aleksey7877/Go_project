@@ -45,3 +45,19 @@ func budgetToResponse(b ledger.Budget) BudgetResponse {
 		Period:   b.Period,
 	}
 }
+
+func reportSummaryToResponse(summary ledger.ReportSummary) ReportSummaryResponse {
+	response := ReportSummaryResponse{
+		Total:      summary.Total,
+		ByCategory: make([]CategorySummaryResponse, 0, len(summary.Categories)),
+	}
+
+	for _, category := range summary.Categories {
+		response.ByCategory = append(response.ByCategory, CategorySummaryResponse{
+			Category: category.Category,
+			Total:    category.Total,
+		})
+	}
+
+	return response
+}

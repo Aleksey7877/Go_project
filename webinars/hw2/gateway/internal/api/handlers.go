@@ -78,7 +78,11 @@ func createBudgetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listTransactionsHandler(w http.ResponseWriter, _ *http.Request) {
-	transactions := ledger.ListTransactions()
+	transactions, err := ledger.ListTransactions()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	response := make([]TransactionResponse, 0, len(transactions))
 
@@ -90,7 +94,11 @@ func listTransactionsHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func listBudgetsHandler(w http.ResponseWriter, _ *http.Request) {
-	budgets := ledger.ListBudgets()
+	budgets, err := ledger.ListBudgets()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
 	response := make([]BudgetResponse, 0, len(budgets))
 
@@ -121,4 +129,18 @@ func budgetHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+func reportSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	summary, err := ledger.GetReportSummary()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response := reportSummaryToResponse(summary)
+	writeJSON(w, http.StatusOK, response)
 }

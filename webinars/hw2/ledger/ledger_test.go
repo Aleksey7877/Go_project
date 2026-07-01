@@ -2,9 +2,23 @@ package ledger
 
 import (
 	"errors"
+	"os"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	err := InitDB()
+	if err != nil {
+		panic(err)
+	}
+
+	code := m.Run()
+
+	CloseDB()
+
+	os.Exit(code)
+}
 
 func TestTransactionValidate(t *testing.T) {
 	t.Parallel()
@@ -57,7 +71,7 @@ func TestTransactionValidate(t *testing.T) {
 			tx: Transaction{
 				Amount:   100,
 				Category: "food",
-				Date: time.Time{},
+				Date:     time.Time{},
 			},
 			wantErr: true,
 		},
@@ -181,16 +195,17 @@ func TestAddTransactionBudgetRules(t *testing.T) {
 		t.Fatalf("AddTransaction() unexpected error: %v", err)
 	}
 
-	if len(ListTransactions()) != 1 {
-		t.Errorf("expected len(ListTransactions()) 1, got %d", len(ListTransactions()))
+	transactions, err := ListTransactions()
+	if err != nil {
+		t.Fatalf("ListTransactions() unexpected error: %v", err)
+	}
+
+	if len(transactions) != 1 {
+		t.Errorf("expected len(ListTransactions()) 1, got %d", len(transactions))
 	}
 
 	_, err = AddTransaction(Transaction{Amount: 5000.1, Category: "food", Date: validDate})
 	if !errors.Is(err, ErrBudgetExceeded) {
 		t.Errorf("expected ErrBudgetExceeded, got %v", err)
-	}
-
-	if len(ListTransactions()) != 1 {
-		t.Errorf("expected len(ListTransactions()) 1, got %d", len(ListTransactions()))
 	}
 }

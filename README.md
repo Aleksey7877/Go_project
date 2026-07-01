@@ -208,3 +208,93 @@ go tool cover -html=cover.out -o cover.html
 
 Ledger: ~61.4%
 Gateway internal/api: ~70.7%
+
+
+# CashCraft HW7
+
+## Что реализовано
+
+- Подключен PostgreSQL для хранения бюджетов и расходов.
+- Добавлены миграции через goose.
+- Реализованы таблицы budgets и expenses.
+- Ledger переведен с in-memory storage на PostgreSQL.
+- Gateway работает с Ledger через SQL-backed storage.
+- Добавлен endpoint отчета GET /api/reports/summary.
+- Подключен Redis для кеширования summary-отчета.
+- Для кеша используется TTL.
+- При добавлении новой транзакции кеш отчета инвалидируется.
+
+## Инфраструктура
+
+PostgreSQL:
+
+docker run --name cashcraft-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=cashapp \
+  -p 5432:5432 \
+  -d postgres:16-alpine
+
+Redis:
+
+docker run -p 6379:6379 --name cashcraft-redis -d redis:7-alpine
+
+## Переменные окружения
+
+DATABASE_URL:
+
+postgres://postgres:postgres@127.0.0.1:5432/cashapp?sslmode=disable
+
+REDIS_ADDR:
+
+localhost:6379
+
+## Миграции
+
+Из папки с миграциями:
+
+goose postgres "$DATABASE_URL" up
+
+## Запуск Gateway
+
+cd train/webinars/hw2/gateway
+
+export DATABASE_URL='postgres://postgres:postgres@127.0.0.1:5432/cashapp?sslmode=disable'
+export REDIS_ADDR='localhost:6379'
+
+go run .
+
+## Тесты
+
+Ledger:
+
+cd train/webinars/hw2/ledger
+go test -v ./...
+
+Gateway:
+
+cd train/webinars/hw2/gateway
+go test -v ./...
+
+## Ручная проверка
+
+Создать бюджет:
+
+curl -i -X POST http://localhost:8080/api/budgets \
+  -H "Content-Type: application/json" \
+  -d '{"category":"food","limit":1000,"period":"2026"}'
+
+Создать транзакцию:
+
+curl -i -X POST http://localhost:8080/api/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"category":"food","amount":100,"date":"2026-09-10","description":"lunch"}'
+
+Получить отчет:
+
+curl -i http://localhost:8080/api/reports/summary
+
+Проверить кеш Redis:
+
+docker exec -it cashcraft-redis redis-cli get report:summary
+docker exec -it cashcraft-redis redis-cli ttl report:summary

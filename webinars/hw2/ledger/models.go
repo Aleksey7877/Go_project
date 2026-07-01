@@ -15,3 +15,13 @@ type Budget struct {
 	Limit    float64
 	Period   string
 }
+
+type CategorySummary struct {
+	Category string
+	Total    float64
+}
+
+type ReportSummary struct {
+	Total      float64
+	Categories []CategorySummary
+}
